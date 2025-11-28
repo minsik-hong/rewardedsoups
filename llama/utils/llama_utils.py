@@ -1,5 +1,5 @@
 import os
-from transformers import LlamaTokenizer
+from transformers import AutoTokenizer
 from transformers import pipeline
 from utils import args_utils
 
@@ -16,28 +16,22 @@ class Pipelines:
     def load_pipe(reward_model, device):
         print(f"Load reward model: {reward_model}")
         pipe = pipeline("text-classification", model=reward_model, device=device,
-                        tokenizer=Tokenizer.load_tokenizer_name(reward_model))
+                        tokenizer=Tokenizer.load_tokenizer(reward_model))
         return pipe
 
 class Tokenizer:
 
     @staticmethod
     def load_tokenizer(base_model_name):
-        tokenizer_name = Tokenizer.load_tokenizer_name(base_model_name)
-        tokenizer = LlamaTokenizer.from_pretrained(
-            tokenizer_name,
-            add_eos_token=True,
+        tokenizer = AutoTokenizer.from_pretrained(
+            base_model_name,
             padding_side="left",
             local_files_only=args_utils.LOCAL_FILES_ONLY
         )
-        tokenizer.pad_token_id = 0
+        if tokenizer.pad_token is None:
+            tokenizer.pad_token = tokenizer.eos_token
+            tokenizer.pad_token_id = tokenizer.eos_token_id
         return tokenizer
-
-    @staticmethod
-    def load_tokenizer_name(model_name):
-        if "llama-7b" in model_name or "lora-7b" in model_name:
-            return "decapoda-research/llama-7b-hf"
-        return model_name
 
 
 class Instructions:

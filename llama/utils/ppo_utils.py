@@ -6,10 +6,18 @@ from torch.optim.lr_scheduler import LambdaLR
 
 from tqdm import tqdm
 
-from transformers import LlamaForCausalLM
+from transformers import AutoModelForCausalLM, BitsAndBytesConfig
 from trl import AutoModelForCausalLMWithValueHead
-from trl.core import LengthSampler
-from peft import PeftModel, LoraConfig, get_peft_model, prepare_model_for_int8_training
+# from trl.core import LengthSampler # Removed as it is not directly available in recent versions
+import numpy as np
+
+class LengthSampler:
+    def __init__(self, min_value, max_value):
+        self.values = list(range(min_value, max_value))
+    def __call__(self):
+        return np.random.choice(self.values)
+
+from peft import PeftModel, LoraConfig, get_peft_model, prepare_model_for_kbit_training
 
 from utils import llama_utils, args_utils
 
@@ -28,8 +36,12 @@ class Loader:
 
     @staticmethod
     def load_base_model(base_model_name):
-        base_model = LlamaForCausalLM.from_pretrained(base_model_name, load_in_8bit=args_utils.LOAD_IN_8BIT, device_map="auto")
-        base_model = prepare_model_for_int8_training(base_model)
+        base_model = AutoModelForCausalLM.from_pretrained(
+            base_model_name, 
+            device_map="auto", 
+            # quantization_config=BitsAndBytesConfig(load_in_8bit=args_utils.LOAD_IN_8BIT, llm_int8_enable_fp32_cpu_offload=True)
+            )
+        base_model = prepare_model_for_kbit_training(base_model)
         return base_model
 
     @staticmethod
@@ -37,7 +49,17 @@ class Loader:
         """### Apply LoRA
         Here comes the magic with `peft`! Let's load a `PeftModel` and specify that we are going to use low-rank adapters (LoRA) using `get_peft_model` utility function from `peft`.
         """
-        if peft_name.startswith("lora"):
+        if peft_name == "None" or peft_name is None:
+            lora_config = LoraConfig(
+                r=16,
+                lora_alpha=16,
+                lora_dropout=0.05,
+                target_modules=["q_proj", "k_proj", "v_proj", "o_proj"],
+                bias="none",
+                task_type="CAUSAL_LM",
+            )
+            model = get_peft_model(base_model, lora_config)
+        elif peft_name.startswith("lora"):
             if "-" in peft_name:
                 r = int(peft_name.split("-")[-1])
             else:

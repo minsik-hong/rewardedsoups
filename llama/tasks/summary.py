@@ -3,7 +3,7 @@ import torch
 import numpy as np
 
 from datasets import load_dataset
-from trl.core import LengthSampler
+from utils.ppo_utils import LengthSampler
 
 from utils import llama_utils, inference_utils
 

@@ -21,15 +21,17 @@ if __name__ == "__main__":
     model = ppo_utils.Loader.load_peft_model(base_model, peft_name=script_args.peft_name)
 
     config = PPOConfig(
-        model_name=script_args.base_model_name,
-        init_kl_coef=script_args.init_kl_coef,
+        # model_name=script_args.base_model_name, # Deprecated/Removed in recent TRL
+        kl_coef=script_args.init_kl_coef,
         learning_rate=script_args.learning_rate,
-        log_with=script_args.log_with,
+        # log_with=script_args.log_with, # Removed in recent TRL
         batch_size=script_args.batch_size,
         mini_batch_size=script_args.mini_batch_size,
-        optimize_cuda_cache=True,
+        # optimize_cuda_cache=True, # Removed in recent TRL
         gradient_accumulation_steps=script_args.gradient_accumulation_steps,
-        seed=script_args.seed
+        seed=script_args.seed,
+        # tracker_project_name and tracker_kwargs logic might be needed if log_with was used for tracking setup.
+        # For now, rely on 'report_to' argument or similar in TrainingArguments (OnPolicyConfig inherits from it).
     )
     # set seed before initializing value head for deterministic eval
     args_utils.set_seed(script_args.seed)

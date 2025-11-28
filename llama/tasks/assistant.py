@@ -2,7 +2,7 @@ import os
 import numpy as np
 
 from datasets import load_dataset, load_from_disk
-from trl.core import LengthSampler
+from utils.ppo_utils import LengthSampler
 
 from utils import llama_utils, args_utils, inference_utils
 

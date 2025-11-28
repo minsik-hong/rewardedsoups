@@ -3,19 +3,21 @@ import argparse
 import re
 from datetime import datetime
 
-from trl import set_seed
 
 # WANDB__SERVICE_WAIT = 300
 LOCAL_FILES_ONLY = os.environ.get("LOCAL_FILES_ONLY", "0") == "1"
 FOLDER_EXPE = os.path.join(os.environ.get("DATA", "/"), "experimentsllama")
 LOAD_IN_8BIT = True
 
+from transformers import set_seed
 
 class DefaultArgs:
     seed = 0
     output_max_length = 32
-    base_model_name = "decapoda-research/llama-7b-hf"
-    peft_name = "tloen/alpaca-lora-7b"
+    # base_model_name = "decapoda-research/llama-7b-hf"
+    base_model_name = "PKU-Alignment/alpaca-8b-reproduced-llama-3"
+    # peft_name = "tloen/alpaca-lora-7b"
+    peft_name = None
 
     reward_models_summary = [
         "Tristan/gpt2_reward_summarization",
